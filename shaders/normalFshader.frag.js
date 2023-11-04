@@ -15,6 +15,86 @@ in vec3 vRayOrigin;
 in vec3 vRayDirection;
 out vec4 outFlagColor;
 
+vec4 createCurrentFuncValueMinusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(0.0, 0.0, 0.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(1.0, 0.0, 0.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(0.0, 1.0, 0.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(1.0, 1.0, 0.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createCurrentFuncValuePlusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(0.0, 0.0, 1.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(1.0, 0.0, 1.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(0.0, 1.0, 1.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(1.0, 1.0, 1.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createExtXFuncValueMinusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(-1.0, 0.0, 0.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(2.0, 0.0, 0.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(-1.0, 1.0, 0.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(2.0, 1.0, 0.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createExtXFuncValuePlusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(-1.0, 0.0, 1.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(2.0, 0.0, 1.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(-1.0, 1.0, 1.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(2.0, 1.0, 1.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createExtYFuncValueMinusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(0.0, -1.0, 0.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(1.0, -1.0, 0.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(0.0, 2.0, 0.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(1.0, 2.0, 0.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createExtYFuncValuePlusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(0.0, -1.0, 1.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(1.0, -1.0, 1.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(0.0, 2.0, 1.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(1.0, 2.0, 1.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createExtZFuncValueMinusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(0.0, 0.0, -1.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(1.0, 0.0, -1.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(0.0, 1.0, -1.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(1.0, 1.0, -1.0) * cubeNumInv).r;
+  return result;
+}
+
+vec4 createExtZFuncValuePlusZ(vec3 cubeBase) {
+  vec4 result;
+  float cubeNumInv = 1.0 / cubeNum;
+  result.x = texture(functionValueTexUnit, cubeBase + vec3(0.0, 0.0, 2.0) * cubeNumInv).r;
+  result.y = texture(functionValueTexUnit, cubeBase + vec3(1.0, 0.0, 2.0) * cubeNumInv).r;
+  result.z = texture(functionValueTexUnit, cubeBase + vec3(0.0, 1.0, 2.0) * cubeNumInv).r;
+  result.w = texture(functionValueTexUnit, cubeBase + vec3(1.0, 1.0, 2.0) * cubeNumInv).r;
+  return result;
+}
+
 float functionValue(vec3 pos, vec4 currentFuncValueMinusZ, vec4 currentFuncValuePlusZ) {
   float oneMinusX = 1.0 - pos.x;
   float oneMinusY = 1.0 - pos.y;
@@ -53,18 +133,16 @@ void main(void) {
   const float infinity = 100000.0;
   const float epsilon = 0.00001;
   const int divideNum = 8;
-  float cubeNumInv = 1.0 / cubeNum;
 
-  vec4 currentFuncValueMinusZ;
-  vec4 currentFuncValuePlusZ;
-  currentFuncValueMinusZ.x = texture(functionValueTexUnit, vCubeBase + vec3(0.0, 0.0, 0.0) * cubeNumInv).r;
-  currentFuncValueMinusZ.y = texture(functionValueTexUnit, vCubeBase + vec3(1.0, 0.0, 0.0) * cubeNumInv).r;
-  currentFuncValueMinusZ.z = texture(functionValueTexUnit, vCubeBase + vec3(0.0, 1.0, 0.0) * cubeNumInv).r;
-  currentFuncValueMinusZ.w = texture(functionValueTexUnit, vCubeBase + vec3(1.0, 1.0, 0.0) * cubeNumInv).r;
-  currentFuncValuePlusZ.x = texture(functionValueTexUnit, vCubeBase + vec3(0.0, 0.0, 1.0) * cubeNumInv).r;
-  currentFuncValuePlusZ.y = texture(functionValueTexUnit, vCubeBase + vec3(1.0, 0.0, 1.0) * cubeNumInv).r;
-  currentFuncValuePlusZ.z = texture(functionValueTexUnit, vCubeBase + vec3(0.0, 1.0, 1.0) * cubeNumInv).r;
-  currentFuncValuePlusZ.w = texture(functionValueTexUnit, vCubeBase + vec3(1.0, 1.0, 1.0) * cubeNumInv).r;
+  vec4 currentFuncValueMinusZ = createCurrentFuncValueMinusZ(vCubeBase);
+  vec4 currentFuncValuePlusZ = createCurrentFuncValuePlusZ(vCubeBase);
+
+  vec4 extXFuncValueMinusZ = createExtXFuncValueMinusZ(vCubeBase);
+  vec4 extXFuncValuePlusZ = createExtXFuncValuePlusZ(vCubeBase);
+  vec4 extYFuncValueMinusZ = createExtYFuncValueMinusZ(vCubeBase);
+  vec4 extYFuncValuePlusZ = createExtYFuncValuePlusZ(vCubeBase);
+  vec4 extZFuncValueMinusZ = createExtZFuncValueMinusZ(vCubeBase);
+  vec4 extZFuncValuePlusZ = createExtZFuncValuePlusZ(vCubeBase);
 
   float maxT = infinity;
   for (int idx = 0; idx < 3; idx++) {

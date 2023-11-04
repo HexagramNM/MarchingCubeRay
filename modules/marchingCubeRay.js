@@ -19,9 +19,10 @@ var timeInfo = {
 	performaceStartTime: null,
 	frameCount: 0
 };
-var canvasSize = {
+var canvasInfo = {
 	width: 1280,
-	height: 720
+	height: 720,
+	shouldUpdateViewport: true
 };
 var cubeInfo = {
 	size: 0.2,
@@ -35,10 +36,12 @@ var bufferInfo = {
 	cubeBase_vbo: null,
 	cubeBase_data: null,
 	index_ibo: null,
-	index_num: 0,
+	index_num: 0
+};
+var textureInfo = {
 	functionValue_tex: null,
 	functionValue_data: null
-};
+}
 var normalShaderInfo = {
 	program: null,
 	attLocation: new Array(),
@@ -159,9 +162,22 @@ function createCubeBuffer() {
 }
 
 function createFunctionValueTexture() {
+	textureInfo.functionValue_tex = g_gl.createTexture();
+	g_gl.activeTexture(g_gl.TEXTURE0);
+	g_gl.bindTexture(g_gl.TEXTURE_3D, textureInfo.functionValue_tex);
+	g_gl.texStorage3D(g_gl.TEXTURE_3D, 1, g_gl.R32F,
+		cubeInfo.num + 1, cubeInfo.num + 1, cubeInfo.num + 1);
+	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_MAG_FILTER, g_gl.NEAREST);
+	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_MIN_FILTER, g_gl.NEAREST);
+	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_WRAP_S, g_gl.CLAMP_TO_EDGE);
+	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_WRAP_T, g_gl.CLAMP_TO_EDGE);
+	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_WRAP_R, g_gl.CLAMP_TO_EDGE);
+}
+
+function updateFunctionValueTexture() {
 	const entireSize = cubeInfo.num * cubeInfo.size;
 
-	bufferInfo.functionValue_data = new Float32Array(Math.round(Math.pow(cubeInfo.num + 1, 3)));
+	textureInfo.functionValue_data = new Float32Array(Math.round(Math.pow(cubeInfo.num + 1, 3)));
 	var vertIdx = 0;
 	for (var z = 0; z <= cubeInfo.num; z++) {
 		for (var y = 0; y <= cubeInfo.num; y++) {
@@ -172,22 +188,14 @@ function createFunctionValueTexture() {
 					z * cubeInfo.size - entireSize * 0.5
 				];
 
-				bufferInfo.functionValue_data[vertIdx] = functionValue(basePos[0], basePos[1], basePos[2]);
+				textureInfo.functionValue_data[vertIdx] = functionValue(basePos[0], basePos[1], basePos[2]);
 				vertIdx++;
 			}
 		}
 	}
 
-	bufferInfo.functionValue_tex = g_gl.createTexture();
-	g_gl.activeTexture(g_gl.TEXTURE0);
-	g_gl.bindTexture(g_gl.TEXTURE_3D, bufferInfo.functionValue_tex);
-	g_gl.texImage3D(g_gl.TEXTURE_3D, 0, g_gl.R32F, cubeInfo.num + 1, cubeInfo.num + 1,
-		cubeInfo.num + 1, 0, g_gl.RED, g_gl.FLOAT, bufferInfo.functionValue_data);
-	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_MAG_FILTER, g_gl.NEAREST);
-	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_MIN_FILTER, g_gl.NEAREST);
-	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_WRAP_S, g_gl.CLAMP_TO_EDGE);
-	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_WRAP_T, g_gl.CLAMP_TO_EDGE);
-	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_WRAP_R, g_gl.CLAMP_TO_EDGE);
+	g_gl.texSubImage3D(g_gl.TEXTURE_3D, 0, 0, 0, 0, cubeInfo.num + 1, cubeInfo.num + 1,
+		cubeInfo.num + 1, g_gl.RED, g_gl.FLOAT, textureInfo.functionValue_data);
 }
 
 function adjustCanvasSize() {
@@ -197,22 +205,30 @@ function adjustCanvasSize() {
 	var widthMargin = 0;
 	var heightMargin = 0;
 
-	if (currentWidth * canvasSize.height / canvasSize.width > currentHeight) {
-		currentWidth = currentHeight * canvasSize.width / canvasSize.height;
+	if (currentWidth * canvasInfo.height / canvasInfo.width > currentHeight) {
+		currentWidth = currentHeight * canvasInfo.width / canvasInfo.height;
 		widthMargin = (document.documentElement.clientWidth - currentWidth) * 0.5;
 	}
 	else {
-		currentHeight = currentWidth * canvasSize.height / canvasSize.width;
+		currentHeight = currentWidth * canvasInfo.height / canvasInfo.width;
 		heightMargin = (document.documentElement.clientHeight - currentHeight) * 0.5;
 	}
 
 	if (c.width != currentWidth || c.height != currentHeight) {
 		c.width = currentWidth;
 		c.height = currentHeight;
-		g_gl.viewport(0, 0, c.width, c.height);
-		g_gl.blendFunc(g_gl.SRC_ALPHA, g_gl.ONE_MINUS_SRC_ALPHA);
+		canvasInfo.shouldUpdateViewport = true;
 	}
 	c.style.margin = heightMargin.toString() + "px " + widthMargin.toString() + "px";
+}
+
+function updateViewport() {
+	if (canvasInfo.shouldUpdateViewport) {
+		var c = document.getElementById('MarchingCubeRay_Output');
+		g_gl.viewport(0, 0, c.width, c.height);
+		g_gl.blendFunc(g_gl.SRC_ALPHA, g_gl.ONE_MINUS_SRC_ALPHA);
+		canvasInfo.shouldUpdateViewport = false;
+	}
 }
 
 function setupShaderProgram(shaderInfo) {
@@ -232,15 +248,28 @@ function setupShaderProgram(shaderInfo) {
 	shaderInfo.uniLocation[7] = g_gl.getUniformLocation(shaderInfo.program, 'lightDir');
 }
 
+function displayNotSupportedBrowser() {
+	var c = document.getElementById('MarchingCubeRay_Output');
+	var ctx = c.getContext('2d');
+	ctx.clearRect(0, 0, c.width, c.height);
+	ctx.font = "20px serif";
+	ctx.fillStyle = "#ffffff";
+	ctx.fillText("申し訳ございません。お使いのブラウザには対応しておりません。", 20, 20);
+}
+
 export function MarchingCubeRay_init() {
 	var c = document.getElementById('MarchingCubeRay_Output');
 	if (!c || !(c.getContext)) {
 		return;
 	}
 	g_gl=c.getContext('webgl2');
-	g_gl.getExtension("EXT_color_buffer_float");
+	if (!g_gl || !g_gl.getExtension("EXT_color_buffer_float")){
+		requestAnimationFrame(MarchingCubeRay_errorMain);
+		return;
+	}
 
 	adjustCanvasSize();
+	updateViewport();
 
 	var v_shader=create_shader(normalVshaderSrc, "x-shader/x-vertex");
 	var f_shader=create_shader(normalFshaderSrc, "x-shader/x-fragment");
@@ -255,12 +284,13 @@ export function MarchingCubeRay_init() {
 	g_gl.enable(g_gl.DEPTH_TEST);
 	g_gl.depthFunc(g_gl.LEQUAL);
 
-	m.lookAt([0.0, 7.0, -18.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0], vMatrix);
+	m.lookAt([0.0, 5.25, -13.5], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0], vMatrix);
 	m.perspective(60.0, c.width/c.height, 1.0, 100, pMatrix);
 	m.multiply(pMatrix, vMatrix, vpMatrix);
 
 	createCubeBuffer();
 	createFunctionValueTexture();
+	updateFunctionValueTexture();
 
 	timeInfo.previousTimestamp =  performance.now();
 	requestAnimationFrame(MarchingCubeRay_main);
@@ -319,6 +349,7 @@ function MarchingCubeRay_main() {
 		timeInfo.performanceStartTime = performance.now();
 	}
 	adjustCanvasSize();
+	updateViewport();
 	updateParameter();
 	draw();
 	var endTime = performance.now();
@@ -331,4 +362,10 @@ function MarchingCubeRay_main() {
 		timeInfo.frameCount = 0;
 	}
 	requestAnimationFrame(MarchingCubeRay_main);
+}
+
+function MarchingCubeRay_errorMain() {
+	adjustCanvasSize();
+	displayNotSupportedBrowser();
+	requestAnimationFrame(MarchingCubeRay_errorMain);
 }
