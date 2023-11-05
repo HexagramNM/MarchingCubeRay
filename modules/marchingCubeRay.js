@@ -165,7 +165,7 @@ function createFunctionValueTexture() {
 	textureInfo.functionValue_tex = g_gl.createTexture();
 	g_gl.activeTexture(g_gl.TEXTURE0);
 	g_gl.bindTexture(g_gl.TEXTURE_3D, textureInfo.functionValue_tex);
-	g_gl.texStorage3D(g_gl.TEXTURE_3D, 1, g_gl.R32F,
+	g_gl.texStorage3D(g_gl.TEXTURE_3D, 1, g_gl.RGBA32F,
 		cubeInfo.num + 1, cubeInfo.num + 1, cubeInfo.num + 1);
 	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_MAG_FILTER, g_gl.NEAREST);
 	g_gl.texParameteri(g_gl.TEXTURE_3D, g_gl.TEXTURE_MIN_FILTER, g_gl.NEAREST);
@@ -176,8 +176,9 @@ function createFunctionValueTexture() {
 
 function updateFunctionValueTexture() {
 	const entireSize = cubeInfo.num * cubeInfo.size;
+	const epsilon = 0.001;
 
-	textureInfo.functionValue_data = new Float32Array(Math.round(Math.pow(cubeInfo.num + 1, 3)));
+	textureInfo.functionValue_data = new Float32Array(Math.round(Math.pow(cubeInfo.num + 1, 3)) * 4);
 	var vertIdx = 0;
 	for (var z = 0; z <= cubeInfo.num; z++) {
 		for (var y = 0; y <= cubeInfo.num; y++) {
@@ -188,14 +189,21 @@ function updateFunctionValueTexture() {
 					z * cubeInfo.size - entireSize * 0.5
 				];
 
-				textureInfo.functionValue_data[vertIdx] = functionValue(basePos[0], basePos[1], basePos[2]);
+				var currentFuncValue = functionValue(basePos[0], basePos[1], basePos[2]);
+				textureInfo.functionValue_data[4 * vertIdx] = (functionValue(basePos[0] + epsilon, basePos[1], basePos[2])
+					- currentFuncValue) / epsilon;
+				textureInfo.functionValue_data[4 * vertIdx + 1] = (functionValue(basePos[0], basePos[1] + epsilon, basePos[2])
+					- currentFuncValue) / epsilon;
+				textureInfo.functionValue_data[4 * vertIdx + 2] = (functionValue(basePos[0], basePos[1], basePos[2] + epsilon)
+					- currentFuncValue) / epsilon;
+				textureInfo.functionValue_data[4 * vertIdx + 3] = currentFuncValue;
 				vertIdx++;
 			}
 		}
 	}
 
 	g_gl.texSubImage3D(g_gl.TEXTURE_3D, 0, 0, 0, 0, cubeInfo.num + 1, cubeInfo.num + 1,
-		cubeInfo.num + 1, g_gl.RED, g_gl.FLOAT, textureInfo.functionValue_data);
+		cubeInfo.num + 1, g_gl.RGBA, g_gl.FLOAT, textureInfo.functionValue_data);
 }
 
 function adjustCanvasSize() {
