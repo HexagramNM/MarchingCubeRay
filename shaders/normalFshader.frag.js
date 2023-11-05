@@ -75,7 +75,7 @@ void main(void) {
   surfaceNormal = normalize(surfaceNormal);
 
   vec3 lightDirInCube = normalize((mvMatrixTranspose * vec4(lightDir, 0.0)).xyz);
-  float diffuse = dot(lightDirInCube, surfaceNormal);
+  float diffuse = max(dot(lightDirInCube, surfaceNormal), 0.0);
 
   vec3 refRayDirection = vRayDirection + 2.0 * dot(surfaceNormal, -vRayDirection) * surfaceNormal;
   float specular = pow(max(dot(refRayDirection, lightDirInCube), 0.0), 5.0);

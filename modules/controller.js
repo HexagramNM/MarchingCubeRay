@@ -1,22 +1,52 @@
 
+export var eShape = 0.3;
+export var nShape = 0.3;
 export var isosurfaceValue = 7.5;
 export var globalColor = new Float32Array([255.0 / 255.0, 144.0 / 255.0, 90.0 / 255.0, 1.0]);
 export var lightDir = new Float32Array([1.0, 0.0, 0.0]);
+export var zoom = 0.5;
 
+const eShapeBox = document.getElementById("eShapeBox");
+const eShapeSlider = document.getElementById("eShapeSlider");
+const nShapeBox = document.getElementById("nShapeBox");
+const nShapeSlider = document.getElementById("nShapeSlider");
+const isosurfaceValueBox = document.getElementById("isosurfaceValueBox");
+const isosurfaceValueSlider = document.getElementById("isosurfaceValueSlider");
 const redBox = document.getElementById("redBox");
 const redSlider = document.getElementById("redSlider");
 const greenBox = document.getElementById("greenBox");
 const greenSlider = document.getElementById("greenSlider");
 const blueBox = document.getElementById("blueBox");
 const blueSlider = document.getElementById("blueSlider");
-const isosurfaceValueBox = document.getElementById("isosurfaceValueBox");
-const isosurfaceValueSlider = document.getElementById("isosurfaceValueSlider");
 const horizontalLightDirBox = document.getElementById("horizontalLightDirBox");
 const horizontalLightDirSlider = document.getElementById("horizontalLightDirSlider");
 const verticalLightDirBox = document.getElementById("verticalLightDirBox");
 const verticalLightDirSlider = document.getElementById("verticalLightDirSlider");
+const zoomSlider = document.getElementById("zoomSlider");
 
 export function controller_init() {
+  eShapeBox.addEventListener("change", (event) => {
+    eShapeSlider.value = event.target.value;
+    eShape = event.target.value;
+  });
+  eShapeSlider.addEventListener("mouseup", (event) => {
+    eShapeBox.value = event.target.value;
+    eShape = event.target.value;
+  });
+  nShapeBox.addEventListener("change", (event) => {
+    nShapeSlider.value = event.target.value;
+    nShape = event.target.value;
+  });
+  nShapeSlider.addEventListener("mouseup", (event) => {
+    nShapeBox.value = event.target.value;
+    nShape = event.target.value;
+  });
+  isosurfaceValueBox.addEventListener("change", (event) => {
+    isosurfaceValueSlider.value = event.target.value;
+  });
+  isosurfaceValueSlider.addEventListener("change", (event) => {
+    isosurfaceValueBox.value = event.target.value;
+  });
   redBox.addEventListener("change", (event) => {
     redSlider.value = event.target.value;
   });
@@ -34,12 +64,6 @@ export function controller_init() {
   });
   blueSlider.addEventListener("change", (event) => {
     blueBox.value = event.target.value;
-  });
-  isosurfaceValueBox.addEventListener("change", (event) => {
-    isosurfaceValueSlider.value = event.target.value;
-  });
-  isosurfaceValueSlider.addEventListener("change", (event) => {
-    isosurfaceValueBox.value = event.target.value;
   });
   horizontalLightDirBox.addEventListener("change", (event) => {
     horizontalLightDirSlider.value = event.target.value;
@@ -67,4 +91,6 @@ export function updateParameter() {
 	lightDir[0] = Math.cos(horizontalRadian) * Math.cos(verticalRadian);
 	lightDir[1] = Math.sin(verticalRadian);
 	lightDir[2] = Math.sin(horizontalRadian) * Math.cos(verticalRadian);
+
+  zoom = zoomSlider.value;
 }

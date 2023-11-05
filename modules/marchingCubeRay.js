@@ -4,9 +4,12 @@ import {create_vbo,
 	create_ibo,
 	create_shader,
 	create_program} from "./createWebGLObj.js";
-import {isosurfaceValue,
+import {eShape,
+	nShape,
+	isosurfaceValue,
 	globalColor,
 	lightDir,
+	zoom,
 	updateParameter} from "./controller.js";
 
 import normalVshaderSrc from "./../shaders/normalVshader.vert.js";
@@ -23,6 +26,11 @@ var canvasInfo = {
 	width: 1280,
 	height: 720,
 	shouldUpdateViewport: true
+};
+var settingInfo = {
+	eShape: 0.3,
+	nShape: 0.3,
+	zoom: 0.5
 };
 var cubeInfo = {
 	size: 0.2,
@@ -85,10 +93,8 @@ var cubeBaseIndex = [
 ];
 
 function functionValue(x, y, z) {
-	var se_e = 0.5;
-	var se_n = 0.5;
-	var superElipsoid = Math.pow(Math.pow(Math.abs(x), 2.0 / se_e) + Math.pow(Math.abs(y), 2.0 / se_e), se_e / se_n)
-		+ Math.pow(Math.abs(z), 2.0 / se_n);
+	var superElipsoid = Math.pow(Math.pow(Math.abs(x), 2.0 / eShape) + Math.pow(Math.abs(y), 2.0 / eShape), eShape / nShape)
+		+ Math.pow(Math.abs(z), 2.0 / nShape);
 	return superElipsoid;
 }
 
@@ -235,8 +241,24 @@ function updateViewport() {
 		var c = document.getElementById('MarchingCubeRay_Output');
 		g_gl.viewport(0, 0, c.width, c.height);
 		g_gl.blendFunc(g_gl.SRC_ALPHA, g_gl.ONE_MINUS_SRC_ALPHA);
+		m.perspective(60.0, c.width/c.height, 1.0, 100, pMatrix);
+		m.multiply(pMatrix, vMatrix, vpMatrix);
 		canvasInfo.shouldUpdateViewport = false;
 	}
+}
+
+function updateCameraView() {
+	var c = document.getElementById('MarchingCubeRay_Output');
+	var zoomIn = [0.0, 3.5, -9];
+	var zoomOut = [0.0, 10.5, -27];
+	var currentZoom = [0.0, 0.0, 0.0];
+
+	for (var idx = 0; idx < 3; idx++) {
+		currentZoom[idx] = (1.0 - zoom) * zoomOut[idx] + zoom * zoomIn[idx];
+	}
+
+	m.lookAt(currentZoom, [0.0, 0.0, 0.0], [0.0, 1.0, 0.0], vMatrix);
+	m.multiply(pMatrix, vMatrix, vpMatrix);
 }
 
 function setupShaderProgram(shaderInfo) {
@@ -292,9 +314,11 @@ export function MarchingCubeRay_init() {
 	g_gl.enable(g_gl.DEPTH_TEST);
 	g_gl.depthFunc(g_gl.LEQUAL);
 
-	m.lookAt([0.0, 5.25, -13.5], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0], vMatrix);
-	m.perspective(60.0, c.width/c.height, 1.0, 100, pMatrix);
-	m.multiply(pMatrix, vMatrix, vpMatrix);
+	settingInfo.eShape = eShape;
+	settingInfo.nShape = nShape;
+	settingInfo.zoom = zoom;
+
+	updateCameraView();
 
 	createCubeBuffer();
 	createFunctionValueTexture();
@@ -355,6 +379,17 @@ function draw() {
 function MarchingCubeRay_main() {
 	if (timeInfo.frameCount == 0) {
 		timeInfo.performanceStartTime = performance.now();
+	}
+	if (zoom != settingInfo.zoom) {
+		settingInfo.zoom = zoom;
+		updateCameraView();
+	}
+	if (eShape != settingInfo.eShape
+		|| nShape != settingInfo.nShape) {
+
+		settingInfo.eShape = eShape;
+		settingInfo.nShape = nShape;
+		updateFunctionValueTexture();
 	}
 	adjustCanvasSize();
 	updateViewport();
