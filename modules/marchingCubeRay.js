@@ -101,7 +101,6 @@ function functionValue(x, y, z) {
 function createCubeBuffer() {
 	const maxCubeNumInOneVbo = 64 * 64;
 	const vboNum = Math.round(Math.pow(cubeInfo.num, 3)) / maxCubeNumInOneVbo;
-	bufferInfo.index_num = maxCubeNumInOneVbo * cubeBaseIndex.length;
 	bufferInfo.position_data = new Array(vboNum);
 	bufferInfo.cubePos_data = new Array(vboNum);
 	bufferInfo.cubeBase_data = new Array(vboNum);
@@ -151,11 +150,13 @@ function createCubeBuffer() {
 			}
 		}
 	}
+	
 	bufferInfo.position_vbo = create_vbo(bufferInfo.position_data[0], true);
 	bufferInfo.cubePos_vbo = create_vbo(bufferInfo.cubePos_data[0], true);
 	bufferInfo.cubeBase_vbo = create_vbo(bufferInfo.cubeBase_data[0], true);
 
 	// ibo
+	bufferInfo.index_num = maxCubeNumInOneVbo * cubeBaseIndex.length;
 	var index = new Uint16Array(bufferInfo.index_num);
 	for (cubeIdx = 0; cubeIdx < maxCubeNumInOneVbo; cubeIdx++) {
 			for (var idx = 0; idx < cubeBaseIndex.length; idx++) {
