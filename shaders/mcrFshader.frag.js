@@ -48,11 +48,12 @@ void main(void) {
   vec4 funcNormalZMinusZ = vec4(v000.z, vx00.z, v0y0.z, vxy0.z);
   vec4 funcNormalZPlusZ = vec4(v00z.z, vx0z.z, v0yz.z, vxyz.z);
 
+  vec3 rayDirection = normalize(vRayDirection);
   float maxT = infinity;
   for (int idx = 0; idx < 3; idx++) {
-    float signDir = step(0.0, vRayDirection[idx]);
-    float candidateT = mix(vRayOrigin[idx], 1.0 - vRayOrigin[idx], signDir) / (abs(vRayDirection[idx]) + epsilon);
-    maxT = min(maxT, mix(infinity, candidateT, step(epsilon, abs(vRayDirection[idx]))));
+    float signDir = step(0.0, rayDirection[idx]);
+    float candidateT = mix(vRayOrigin[idx], 1.0 - vRayOrigin[idx], signDir) / (abs(rayDirection[idx]) + epsilon);
+    maxT = min(maxT, mix(infinity, candidateT, step(epsilon, abs(rayDirection[idx]))));
   }
   maxT = max(maxT, 0.0);
 
@@ -65,7 +66,7 @@ void main(void) {
     float currentValue = trilinearInterpolation(currentRayPos, funcValueMinusZ, funcValuePlusZ) - isosurfaceValue;
     hitPos = mix(currentRayPos, hitPos, hitFlag);
     hitFlag = max(hitFlag, 1.0 - step(0.0, currentValue));
-    currentRayPos += oneStepT * vRayDirection;
+    currentRayPos += oneStepT * rayDirection;
   }
 
   vec3 surfaceNormal;
@@ -77,11 +78,11 @@ void main(void) {
   vec3 lightDirInCube = normalize((mvMatrixTranspose * vec4(lightDir, 0.0)).xyz);
   float diffuse = max(dot(lightDirInCube, surfaceNormal), 0.0);
 
-  vec3 refRayDirection = vRayDirection + 2.0 * dot(surfaceNormal, -vRayDirection) * surfaceNormal;
+  vec3 refRayDirection = rayDirection + 2.0 * dot(surfaceNormal, - rayDirection) * surfaceNormal;
   float specular = pow(max(dot(refRayDirection, lightDirInCube), 0.0), 5.0);
 
   outFlagColor = min(0.2 + diffuse, 1.0) * globalColor + specular * vec4(1.0);
-  gl_FragDepth = mix(1.0, vPosition.z / vPosition.w, hitFlag);
+  gl_FragDepth = mix(1.0, (vPosition.z / vPosition.w) * 0.5 + 0.5, hitFlag);
   outFlagColor.a = mix(0.0, 1.0, hitFlag);
 }
 

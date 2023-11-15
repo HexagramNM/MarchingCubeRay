@@ -12,8 +12,8 @@ import {eShape,
 	zoom,
 	updateParameter} from "./controller.js";
 
-import normalVshaderSrc from "./../shaders/normalVshader.vert.js";
-import normalFshaderSrc from "./../shaders/normalFshader.frag.js";
+import mcrVshaderSrc from "./../shaders/mcrVshader.vert.js";
+import mcrFshaderSrc from "./../shaders/mcrFshader.frag.js";
 
 var timeInfo = {
 	count: 0,
@@ -40,10 +40,10 @@ var bufferInfo = {
 	position_vbo: null,
 	position_data: null,
 	cubePos_vbo: null,
-	cubePos_data:null,
+	cubePos_data: null,
 	cubeBase_vbo: null,
 	cubeBase_data: null,
-	index_ibo: null,
+	ibo: null,
 	index_num: 0
 };
 var textureInfo = {
@@ -101,22 +101,22 @@ function functionValue(x, y, z) {
 function createCubeBuffer() {
 	const maxCubeNumInOneVbo = 64 * 64;
 	const vboNum = Math.round(Math.pow(cubeInfo.num, 3)) / maxCubeNumInOneVbo;
-	const positionNum = maxCubeNumInOneVbo * cubeBasePosition.length;
-	const cubeBasePositionNum = cubeBasePosition.length / 3;
 	bufferInfo.index_num = maxCubeNumInOneVbo * cubeBaseIndex.length;
-	const entireSize = cubeInfo.num * cubeInfo.size;
 	bufferInfo.position_data = new Array(vboNum);
 	bufferInfo.cubePos_data = new Array(vboNum);
 	bufferInfo.cubeBase_data = new Array(vboNum);
 
+	const vboDataNum = maxCubeNumInOneVbo * cubeBasePosition.length;
 	for (var vboIdx = 0; vboIdx < vboNum; vboIdx++) {
-		bufferInfo.position_data[vboIdx] = new Float32Array(positionNum);
-		bufferInfo.cubePos_data[vboIdx] = new Float32Array(positionNum);
-		bufferInfo.cubeBase_data[vboIdx] = new Float32Array(positionNum);
+		bufferInfo.position_data[vboIdx] = new Float32Array(vboDataNum);
+		bufferInfo.cubePos_data[vboIdx] = new Float32Array(vboDataNum);
+		bufferInfo.cubeBase_data[vboIdx] = new Float32Array(vboDataNum);
 	}
 
 	var cubeIdx = 0;
 	var vboIdx = 0;
+	const cubeVertexNum = cubeBasePosition.length / 3;
+	const entireSize = cubeInfo.num * cubeInfo.size;
 	for (var z = 0; z < cubeInfo.num; z++) {
 		for (var y = 0; y < cubeInfo.num; y++) {
 			for (var x = 0; x < cubeInfo.num; x++) {
@@ -125,25 +125,24 @@ function createCubeBuffer() {
 					y * cubeInfo.size - entireSize * 0.5,
 					z * cubeInfo.size - entireSize * 0.5
 				];
+				var xyz = [x, y, z];
 
-				// position
-				for (var idx = 0; idx < cubeBasePosition.length; idx++) {
-					bufferInfo.position_data[vboIdx][cubeIdx * cubeBasePosition.length + idx]
-						= basePos[idx % 3] + cubeBasePosition[idx] * cubeInfo.size;
+				for (var cIdx = 0; cIdx < cubeVertexNum; cIdx++) {
+					var currentMemHead = cubeIdx * cubeBasePosition.length + cIdx * 3;
+					for (var xyzIdx = 0; xyzIdx < xyz.length; xyzIdx++) {
+						// position
+						bufferInfo.position_data[vboIdx][currentMemHead + xyzIdx]
+							= basePos[xyzIdx] + cubeBasePosition[cIdx * 3 + xyzIdx] * cubeInfo.size;
+
+						// cubePos
+						bufferInfo.cubePos_data[vboIdx][currentMemHead + xyzIdx]
+							= cubeBasePosition[cIdx * 3 + xyzIdx];
+
+						// cubeBase
+						bufferInfo.cubeBase_data[vboIdx][currentMemHead + xyzIdx]
+							= xyz[xyzIdx] / cubeInfo.num;
+					}
 				}
-
-				// cubePos
-				for (var idx = 0; idx < cubeBasePosition.length; idx++) {
-					bufferInfo.cubePos_data[vboIdx][cubeIdx * cubeBasePosition.length + idx] = cubeBasePosition[idx];
-				}
-
-				// cubeBase
-				for (var idx = 0; idx < cubeBasePositionNum; idx++) {
-					bufferInfo.cubeBase_data[vboIdx][cubeIdx * cubeBasePosition.length + idx * 3 + 0] = x / cubeInfo.num;
-					bufferInfo.cubeBase_data[vboIdx][cubeIdx * cubeBasePosition.length + idx * 3 + 1] = y / cubeInfo.num;
-					bufferInfo.cubeBase_data[vboIdx][cubeIdx * cubeBasePosition.length + idx * 3 + 2] = z / cubeInfo.num;
-				}
-
 				cubeIdx++;
 				if (cubeIdx >= maxCubeNumInOneVbo) {
 					cubeIdx = 0;
@@ -164,7 +163,19 @@ function createCubeBuffer() {
 					= 8 * cubeIdx + cubeBaseIndex[idx];
 			}
 	}
-	bufferInfo.index_ibo = create_ibo(index);
+	bufferInfo.ibo = create_ibo(index);
+}
+
+function setCubeBufferPointer() {
+	g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.position_vbo);
+	g_gl.enableVertexAttribArray(normalShaderInfo.attLocation[0]);
+	g_gl.vertexAttribPointer(normalShaderInfo.attLocation[0], normalShaderInfo.attStride[0], g_gl.FLOAT, false, 0, 0);
+	g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.cubePos_vbo);
+	g_gl.enableVertexAttribArray(normalShaderInfo.attLocation[1]);
+	g_gl.vertexAttribPointer(normalShaderInfo.attLocation[1], normalShaderInfo.attStride[1], g_gl.FLOAT, false, 0, 0);
+	g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.cubeBase_vbo);
+	g_gl.enableVertexAttribArray(normalShaderInfo.attLocation[2]);
+	g_gl.vertexAttribPointer(normalShaderInfo.attLocation[2], normalShaderInfo.attStride[2], g_gl.FLOAT, false, 0, 0);
 }
 
 function createFunctionValueTexture() {
@@ -301,8 +312,8 @@ export function MarchingCubeRay_init() {
 	adjustCanvasSize();
 	updateViewport();
 
-	var v_shader=create_shader(normalVshaderSrc, "x-shader/x-vertex");
-	var f_shader=create_shader(normalFshaderSrc, "x-shader/x-fragment");
+	var v_shader=create_shader(mcrVshaderSrc, "x-shader/x-vertex");
+	var f_shader=create_shader(mcrFshaderSrc, "x-shader/x-fragment");
 
 	//normalShaderのプログラム設定
 	normalShaderInfo.program = create_program(v_shader, f_shader);
@@ -321,6 +332,7 @@ export function MarchingCubeRay_init() {
 	updateCameraView();
 
 	createCubeBuffer();
+	setCubeBufferPointer();
 	createFunctionValueTexture();
 	updateFunctionValueTexture();
 
@@ -333,17 +345,6 @@ function draw() {
 	g_gl.clearDepth(1.0);
 	g_gl.clear(g_gl.COLOR_BUFFER_BIT | g_gl.DEPTH_BUFFER_BIT);
 	g_gl.useProgram(normalShaderInfo.program);
-
-	g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.position_vbo);
-	g_gl.enableVertexAttribArray(normalShaderInfo.attLocation[0]);
-	g_gl.vertexAttribPointer(normalShaderInfo.attLocation[0], normalShaderInfo.attStride[0], g_gl.FLOAT, false, 0, 0);
-	g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.cubePos_vbo);
-	g_gl.enableVertexAttribArray(normalShaderInfo.attLocation[1]);
-	g_gl.vertexAttribPointer(normalShaderInfo.attLocation[1], normalShaderInfo.attStride[1], g_gl.FLOAT, false, 0, 0);
-	g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.cubeBase_vbo);
-	g_gl.enableVertexAttribArray(normalShaderInfo.attLocation[2]);
-	g_gl.vertexAttribPointer(normalShaderInfo.attLocation[2], normalShaderInfo.attStride[2], g_gl.FLOAT, false, 0, 0);
-	g_gl.bindBuffer(g_gl.ELEMENT_ARRAY_BUFFER, bufferInfo.index_ibo);
 
 	var rad=(timeInfo.count - Math.floor(timeInfo.count / 720.0) * 720.0) * Math.PI/360;
 	var x = Math.cos(rad);
@@ -363,6 +364,7 @@ function draw() {
 	g_gl.uniform4fv(normalShaderInfo.uniLocation[6], globalColor);
 	g_gl.uniform3fv(normalShaderInfo.uniLocation[7], lightDir);
 
+	g_gl.bindBuffer(g_gl.ELEMENT_ARRAY_BUFFER, bufferInfo.ibo);
 	for (var vboIdx = 0; vboIdx < bufferInfo.position_data.length; vboIdx++) {
 		g_gl.bindBuffer(g_gl.ARRAY_BUFFER, bufferInfo.position_vbo);
 		g_gl.bufferSubData(g_gl.ARRAY_BUFFER, 0, bufferInfo.position_data[vboIdx]);

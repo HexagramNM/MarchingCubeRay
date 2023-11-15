@@ -44,7 +44,7 @@ void main(void) {
   vPosition = mvpMatrix * vec4(position, 1.0);
   vCubeBase = cubeBase;
   vRayOrigin = cubePos;
-  vRayDirection = normalize((mvMatrixTranspose * mvMatrix * vec4(position, 1.0)).xyz);
+  vRayDirection = (mvMatrixTranspose * mvMatrix * vec4(position, 1.0)).xyz;
   gl_Position = mix(invalidVertexPos, vPosition, shouldDrawCube(cubeBase));
 }
 
