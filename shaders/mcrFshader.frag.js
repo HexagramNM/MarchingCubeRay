@@ -29,6 +29,7 @@ void main(void) {
   const float infinity = 100000.0;
   const float epsilon = 0.00001;
   const int divideNum = 8;
+  const int iterNum = 24;
 
   float cubeNumInv = 1.0 / cubeNum;
   vec4 v000 = texture(functionValueTexUnit, vCubeBase + vec3(0.0, 0.0, 0.0) * cubeNumInv);
@@ -55,24 +56,30 @@ void main(void) {
     float candidateT = mix(vRayOrigin[idx], 1.0 - vRayOrigin[idx], signDir) / (abs(rayDirection[idx]) + epsilon);
     maxT = min(maxT, mix(infinity, candidateT, step(epsilon, abs(rayDirection[idx]))));
   }
+  maxT = mix(0.0, maxT, step(epsilon, abs(infinity - maxT)));
   maxT = max(maxT, 0.0);
 
   vec3 currentRayPos = vRayOrigin;
-  float oneStepT = maxT / float(divideNum);
+  float invDivideNum = 1.0 / float(divideNum);
+  float oneStepT = maxT * invDivideNum;
+  float currentT = 0.0;
 
-  vec3 hitPos;
   float hitFlag = 0.0;
-  for (int idx = 0; idx <= divideNum; idx++) {
+  for (int idx = 0; idx < iterNum; idx++) {
     float currentValue = trilinearInterpolation(currentRayPos, funcValueMinusZ, funcValuePlusZ) - isosurfaceValue;
-    hitPos = mix(currentRayPos, hitPos, hitFlag);
-    hitFlag = max(hitFlag, 1.0 - step(0.0, currentValue));
-    currentRayPos += oneStepT * rayDirection;
+    float currentSign = step(0.0, currentValue);
+    hitFlag = max(hitFlag, 1.0 - currentSign);
+    currentT -= mix(oneStepT, 0.0, currentSign);
+    oneStepT *= mix(invDivideNum, 1.0, currentSign);
+    currentT += oneStepT;
+    currentT = clamp(currentT, 0.0, maxT);
+    currentRayPos = vRayOrigin + currentT * rayDirection;
   }
 
   vec3 surfaceNormal;
-  surfaceNormal.x = trilinearInterpolation(hitPos, funcNormalXMinusZ, funcNormalXPlusZ);
-  surfaceNormal.y = trilinearInterpolation(hitPos, funcNormalYMinusZ, funcNormalYPlusZ);
-  surfaceNormal.z = trilinearInterpolation(hitPos, funcNormalZMinusZ, funcNormalZPlusZ);
+  surfaceNormal.x = trilinearInterpolation(currentRayPos, funcNormalXMinusZ, funcNormalXPlusZ);
+  surfaceNormal.y = trilinearInterpolation(currentRayPos, funcNormalYMinusZ, funcNormalYPlusZ);
+  surfaceNormal.z = trilinearInterpolation(currentRayPos, funcNormalZMinusZ, funcNormalZPlusZ);
   surfaceNormal = normalize(surfaceNormal);
 
   vec3 lightDirInCube = normalize((mvMatrixTranspose * vec4(lightDir, 0.0)).xyz);
@@ -82,7 +89,7 @@ void main(void) {
   float specular = pow(max(dot(refRayDirection, lightDirInCube), 0.0), 5.0);
 
   outFlagColor = min(0.2 + diffuse, 1.0) * globalColor + specular * vec4(1.0);
-  gl_FragDepth = mix(1.0, (vPosition.z / vPosition.w) * 0.5 + 0.5, hitFlag);
+  gl_FragDepth = mix(1.0, vPosition.z / vPosition.w, hitFlag);
   outFlagColor.a = mix(0.0, 1.0, hitFlag);
 }
 

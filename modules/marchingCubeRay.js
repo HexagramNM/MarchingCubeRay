@@ -150,7 +150,7 @@ function createCubeBuffer() {
 			}
 		}
 	}
-	
+
 	bufferInfo.position_vbo = create_vbo(bufferInfo.position_data[0], true);
 	bufferInfo.cubePos_vbo = create_vbo(bufferInfo.cubePos_data[0], true);
 	bufferInfo.cubeBase_vbo = create_vbo(bufferInfo.cubeBase_data[0], true);
@@ -194,7 +194,7 @@ function createFunctionValueTexture() {
 
 function updateFunctionValueTexture() {
 	const entireSize = cubeInfo.num * cubeInfo.size;
-	const epsilon = 0.001;
+	const epsilon = 0.0001;
 
 	textureInfo.functionValue_data = new Float32Array(Math.round(Math.pow(cubeInfo.num + 1, 3)) * 4);
 	var vertIdx = 0;
@@ -207,14 +207,13 @@ function updateFunctionValueTexture() {
 					z * cubeInfo.size - entireSize * 0.5
 				];
 
-				var currentFuncValue = functionValue(basePos[0], basePos[1], basePos[2]);
 				textureInfo.functionValue_data[4 * vertIdx] = (functionValue(basePos[0] + epsilon, basePos[1], basePos[2])
-					- currentFuncValue) / epsilon;
+					- functionValue(basePos[0] - epsilon, basePos[1], basePos[2])) / (2.0 * epsilon);
 				textureInfo.functionValue_data[4 * vertIdx + 1] = (functionValue(basePos[0], basePos[1] + epsilon, basePos[2])
-					- currentFuncValue) / epsilon;
+					- functionValue(basePos[0], basePos[1]  - epsilon, basePos[2])) / (2.0 * epsilon);
 				textureInfo.functionValue_data[4 * vertIdx + 2] = (functionValue(basePos[0], basePos[1], basePos[2] + epsilon)
-					- currentFuncValue) / epsilon;
-				textureInfo.functionValue_data[4 * vertIdx + 3] = currentFuncValue;
+					- functionValue(basePos[0], basePos[1], basePos[2] - epsilon)) / (2.0 * epsilon);
+				textureInfo.functionValue_data[4 * vertIdx + 3] = functionValue(basePos[0], basePos[1], basePos[2]);
 				vertIdx++;
 			}
 		}
