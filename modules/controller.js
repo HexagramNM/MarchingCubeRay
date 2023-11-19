@@ -25,22 +25,27 @@ const verticalLightDirSlider = document.getElementById("verticalLightDirSlider")
 const zoomSlider = document.getElementById("zoomSlider");
 
 export function controller_init() {
+  var mouseupEventName = ["mouseup", "touchend"];
   eShapeBox.addEventListener("change", (event) => {
     eShapeSlider.value = event.target.value;
     eShape = event.target.value;
   });
-  eShapeSlider.addEventListener("mouseup", (event) => {
-    eShapeBox.value = event.target.value;
-    eShape = event.target.value;
-  });
+  for (var idx = 0; idx < mouseupEventName.length; idx++) {
+    eShapeSlider.addEventListener(mouseupEventName[idx], (event) => {
+      eShapeBox.value = event.target.value;
+      eShape = event.target.value;
+    });
+  }
   nShapeBox.addEventListener("change", (event) => {
     nShapeSlider.value = event.target.value;
     nShape = event.target.value;
   });
-  nShapeSlider.addEventListener("mouseup", (event) => {
-    nShapeBox.value = event.target.value;
-    nShape = event.target.value;
-  });
+  for (var idx = 0; idx < mouseupEventName.length; idx++) {
+    nShapeSlider.addEventListener(mouseupEventName[idx], (event) => {
+      nShapeBox.value = event.target.value;
+      nShape = event.target.value;
+    });
+  }
   isosurfaceValueBox.addEventListener("change", (event) => {
     isosurfaceValueSlider.value = event.target.value;
   });
