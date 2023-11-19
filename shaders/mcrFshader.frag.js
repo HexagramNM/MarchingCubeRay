@@ -16,18 +16,16 @@ in vec3 vRayDirection;
 out vec4 outFlagColor;
 
 float trilinearInterpolation(vec3 pos, vec4 currentFuncValueMinusZ, vec4 currentFuncValuePlusZ) {
-  float oneMinusX = 1.0 - pos.x;
-  float oneMinusY = 1.0 - pos.y;
-  float oneMinusZ = 1.0 - pos.z;
-  return oneMinusY * oneMinusZ * (oneMinusX * currentFuncValueMinusZ.x + pos.x * currentFuncValueMinusZ.y)
-    + pos.y * oneMinusZ * (oneMinusX * currentFuncValueMinusZ.z + pos.x * currentFuncValueMinusZ.w)
-    + oneMinusY * pos.z * (oneMinusX * currentFuncValuePlusZ.x + pos.x * currentFuncValuePlusZ.y)
-    + pos.y * pos.z * (oneMinusX * currentFuncValuePlusZ.z + pos.x * currentFuncValuePlusZ.w);
+  vec3 oneMinusPos = vec3(1.0) - pos;
+  return oneMinusPos.y * oneMinusPos.z * (oneMinusPos.x * currentFuncValueMinusZ.x + pos.x * currentFuncValueMinusZ.y)
+    + pos.y * oneMinusPos.z * (oneMinusPos.x * currentFuncValueMinusZ.z + pos.x * currentFuncValueMinusZ.w)
+    + oneMinusPos.y * pos.z * (oneMinusPos.x * currentFuncValuePlusZ.x + pos.x * currentFuncValuePlusZ.y)
+    + pos.y * pos.z * (oneMinusPos.x * currentFuncValuePlusZ.z + pos.x * currentFuncValuePlusZ.w);
 }
 
 void main(void) {
-  const float infinity = 100000.0;
-  const float epsilon = 0.00001;
+  const float infinity = 10000.0;
+  const float epsilon = 0.0001;
   const int divideNum = 8;
   const int iterNum = 24;
 
@@ -49,17 +47,18 @@ void main(void) {
   vec4 funcNormalZMinusZ = vec4(v000.z, vx00.z, v0y0.z, vxy0.z);
   vec4 funcNormalZPlusZ = vec4(v00z.z, vx0z.z, v0yz.z, vxyz.z);
 
+  vec3 rayOrigin = clamp(vRayOrigin, 0.0, 1.0);
   vec3 rayDirection = normalize(vRayDirection);
   float maxT = infinity;
   for (int idx = 0; idx < 3; idx++) {
     float signDir = step(0.0, rayDirection[idx]);
-    float candidateT = mix(vRayOrigin[idx], 1.0 - vRayOrigin[idx], signDir) / (abs(rayDirection[idx]) + epsilon);
+    float candidateT = mix(rayOrigin[idx], 1.0 - rayOrigin[idx], signDir) / (abs(rayDirection[idx]) + epsilon);
     maxT = min(maxT, mix(infinity, candidateT, step(epsilon, abs(rayDirection[idx]))));
   }
   maxT = mix(0.0, maxT, step(epsilon, abs(infinity - maxT)));
   maxT = max(maxT, 0.0);
 
-  vec3 currentRayPos = vRayOrigin;
+  vec3 currentRayPos = rayOrigin;
   float invDivideNum = 1.0 / float(divideNum);
   float oneStepT = maxT * invDivideNum;
   float currentT = 0.0;
@@ -71,9 +70,8 @@ void main(void) {
     hitFlag = max(hitFlag, 1.0 - currentSign);
     currentT -= mix(oneStepT, 0.0, currentSign);
     oneStepT *= mix(invDivideNum, 1.0, currentSign);
-    currentT += oneStepT;
-    currentT = clamp(currentT, 0.0, maxT);
-    currentRayPos = vRayOrigin + currentT * rayDirection;
+    currentT = clamp(currentT + oneStepT, 0.0, maxT);
+    currentRayPos = clamp(rayOrigin + currentT * rayDirection, 0.0, 1.0);
   }
 
   vec3 surfaceNormal;
