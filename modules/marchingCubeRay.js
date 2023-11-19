@@ -49,7 +49,7 @@ var bufferInfo = {
 var textureInfo = {
 	functionValue_tex: null,
 	functionValue_data: null
-}
+};
 var normalShaderInfo = {
 	program: null,
 	attLocation: new Array(),
