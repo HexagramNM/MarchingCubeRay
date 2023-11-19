@@ -26,6 +26,7 @@ const zoomSlider = document.getElementById("zoomSlider");
 
 export function controller_init() {
   var mouseupEventName = ["mouseup", "touchend"];
+
   eShapeBox.addEventListener("change", (event) => {
     eShapeSlider.value = event.target.value;
     eShape = event.target.value;
@@ -36,6 +37,7 @@ export function controller_init() {
       eShape = event.target.value;
     });
   }
+
   nShapeBox.addEventListener("change", (event) => {
     nShapeSlider.value = event.target.value;
     nShape = event.target.value;
@@ -46,36 +48,42 @@ export function controller_init() {
       nShape = event.target.value;
     });
   }
+
   isosurfaceValueBox.addEventListener("change", (event) => {
     isosurfaceValueSlider.value = event.target.value;
   });
   isosurfaceValueSlider.addEventListener("change", (event) => {
     isosurfaceValueBox.value = event.target.value;
   });
+
   redBox.addEventListener("change", (event) => {
     redSlider.value = event.target.value;
   });
   redSlider.addEventListener("change", (event) => {
     redBox.value = event.target.value;
   });
+
   greenBox.addEventListener("change", (event) => {
     greenSlider.value = event.target.value;
   });
   greenSlider.addEventListener("change", (event) => {
     greenBox.value = event.target.value;
   });
+
   blueBox.addEventListener("change", (event) => {
     blueSlider.value = event.target.value;
   });
   blueSlider.addEventListener("change", (event) => {
     blueBox.value = event.target.value;
   });
+
   horizontalLightDirBox.addEventListener("change", (event) => {
     horizontalLightDirSlider.value = event.target.value;
   });
   horizontalLightDirSlider.addEventListener("change", (event) => {
     horizontalLightDirBox.value = event.target.value;
   });
+  
   verticalLightDirBox.addEventListener("change", (event) => {
     verticalLightDirSlider.value = event.target.value;
   });
